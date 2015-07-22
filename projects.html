@@ -40,79 +40,139 @@
         text-align: center;
       }
 
-      ol {
-        padding-left: 2em;
+      ul {
+        list-style: none;
+        padding: 0;
+        width: 800px;
+        display: block;
       }
 
       li {
-        padding-bottom: 1em;
-      }
-
-      ul {
-        list-style: none;
-      }
-
-      li img {
         border: 15px solid #eee;
-
+        background: #fff;
+        color: #000;
+        margin-bottom: 1em;
+        padding: 0 1em;
+        width: 310px;
+        height: 500px;
+        display: inline-block;
+        float: left;
+        overflow-x: none;
       }
 
-      @media (max-width: 800px) {
-        body {
-          font-size: 14pt;
-        }
+      li:nth-child(even) {
+        margin-left: 22px;
+      }
 
-        #main {
-          width: 350px;
-        }
+      li.beleted {
+        height: 3em;
+      }
 
-        li {
-          padding-bottom: 0;
-        }
+      li a {
+        color: black;
+        text-decoration: none;
+      }
+
+      textarea {
+        width: 100%;
+        height: 20em;
+        margin-bottom: 1em;
+        display: block;
       }
     </style>
     <script>
-      document.addEventListener('DOMContentLoaded', function (e) {
+      function populateList (projectListJSON) {
         var projectList = document.querySelector('#project-list');
+        projectList.innerHTML = '';
 
-        var projectListXHR = new XMLHttpRequest();
-        projectListXHR.open('GET', 'projects.json', true);
+        projectListJSON.forEach(function (project) {
+          var li = document.createElement('li');
+          projectList.appendChild(li);
 
-        projectListXHR.onload = function (e) {
-          var projectListJSON = JSON.parse(projectListXHR.response);
+          var projectDataXHR = new XMLHttpRequest();
+          projectDataXHR.open('GET', 'https://api.webmaker.org/users/' + project.user + '/projects/' + project.project + '/', true);
+          projectDataXHR.onload = function (e) {
+            var projectData = JSON.parse(projectDataXHR.response);
 
-          projectListJSON.forEach(function (project) {
-            var li = document.createElement('li');
-            projectList.appendChild(li);
+            if (projectData.statusCode === 404) {
+              li.appendChild(document.createTextNode('Project ' + project.project + ' by ' + project.user + ' was deleted.'));
+              li.classList.add('beleted');
+              return;
+            }
 
-            var projectDataXHR = new XMLHttpRequest();
-            projectDataXHR.open('GET', 'https://api.webmaker.org/users/' + project.user + '/projects/' + project.project + '/', true);
-            projectDataXHR.onload = function (e) {
-              var projectData = JSON.parse(projectDataXHR.response);
+            var thumbnail = projectData.project.thumbnail['320'];
+            var title = projectData.project.title;
 
-              var thumbnail = projectData.project.thumbnail['320'];
-              var title = projectData.project.title;
+            var projectTitleHeader = document.createElement('h3');
+            projectTitleHeader.innerText = title;
 
-              var projectTitleH2 = document.createElement('h2');
-              projectTitleH2.innerText = title;
+            var projectThumbnailImage = document.createElement('img');
+            projectThumbnailImage.src = thumbnail || '';
 
-              var projectThumbnailImage = document.createElement('img');
-              projectThumbnailImage.src = thumbnail;
+            var projectCommentP = document.createElement('p');
+            projectCommentP.innerText = project.comment || '';
 
-              var projectCommentP = document.createElement('p');
-              projectCommentP.innerText = project.comment;
+            var link = document.createElement('a');
 
-              li.appendChild(projectTitleH2);
-              li.appendChild(projectThumbnailImage);
-              li.appendChild(projectCommentP);
-            };
+            link.href = 'https://beta.webmaker.org/#/player?user=' + project.user + '&project=' + project.project
 
-            projectDataXHR.send();
+            link.appendChild(projectTitleHeader);
+            link.appendChild(projectThumbnailImage);
+            li.appendChild(link);
+            li.appendChild(projectCommentP);
+          };
 
-          });
-        };
+          projectDataXHR.send();
 
-        projectListXHR.send();
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function (e) {
+        if (window.location.search) {
+          var json;
+
+          try {
+            json = JSON.parse(unescape(window.location.search.substr(6)));
+          }
+          catch (e) {
+            console.error(e);
+          }
+
+          if (json) {
+            populateList(json);
+          }
+        }
+        else {
+          var projectListXHR = new XMLHttpRequest();
+          projectListXHR.open('GET', 'projects.json', true);
+          projectListXHR.onload = function (e) {
+            var projectListJSON = JSON.parse(projectListXHR.response);
+
+            populateList(projectListJSON);
+          };
+
+          projectListXHR.send();
+        }
+
+        var getButton = document.querySelector('#get-button');
+        var jsonInput = document.querySelector('#json-input');
+
+        if (getButton) {
+          getButton.onclick = function (e) {
+            var json;
+
+            try {
+              json = JSON.parse(jsonInput.value);
+            }
+            catch (e) {
+              console.error(e);
+            }
+
+            if (json) {
+              populateList(json);
+            }
+          };
+        }
       });
     </script>
   </head>
@@ -121,6 +181,9 @@
       <h1>Great Webmaker Projects</h1>
       <ul id="project-list">
       </ul>
+      <hr>
+      <!--<textarea id="json-input"></textarea>
+      <button id="get-button">Get</button>-->
     </div>
   </body>
 </html>
