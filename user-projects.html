@@ -1,0 +1,156 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Language" content="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//code.cdn.mozilla.net/fonts/fira.css">
+    <title>Great Webmaker Projects</title>
+    <style>
+      html {
+        background: linear-gradient(135deg, #4c88ef 0%,#17e4d9 100%);
+        background-attachment: fixed;
+        background-size: contain;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        font-family: FiraSans, 'Fira Sans', 'Open Sans';
+        font-size: 18pt;
+        color: white;
+      }
+
+      a {
+        color: white;
+      }
+
+      #main {
+        margin: 3em auto;
+        width: 800px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        width: 800px;
+        display: block;
+      }
+
+      li {
+        border: 15px solid #eee;
+        background: #fff;
+        color: #000;
+        margin-bottom: 1em;
+        padding: 0 1em;
+        width: 310px;
+        height: 500px;
+        display: inline-block;
+        float: left;
+        overflow-x: none;
+      }
+
+      li:nth-child(even) {
+        margin-left: 22px;
+      }
+
+      li.beleted {
+        height: 3em;
+      }
+
+      li a {
+        color: black;
+        text-decoration: none;
+      }
+
+      textarea {
+        width: 100%;
+        height: 20em;
+        margin-bottom: 1em;
+        display: block;
+      }
+    </style>
+    <script>
+      function populateList (projectListJSON) {
+        var projectList = document.querySelector('#project-list');
+        projectList.innerHTML = '';
+
+        projectListJSON.forEach(function (project) {
+          var li = document.createElement('li');
+          projectList.appendChild(li);
+
+          var projectDataXHR = new XMLHttpRequest();
+          projectDataXHR.open('GET', 'https://api.webmaker.org/users/' + project.author.id + '/projects/' + project.id + '/', true);
+          projectDataXHR.onload = function (e) {
+            var projectData = JSON.parse(projectDataXHR.response);
+
+            if (projectData.statusCode === 404) {
+              li.appendChild(document.createTextNode('Project ' + project.id + ' by ' + project.author.id + ' was deleted.'));
+              li.classList.add('beleted');
+              return;
+            }
+
+            var thumbnail = projectData.project.thumbnail['320'];
+            var title = projectData.project.title;
+
+            var projectTitleHeader = document.createElement('h3');
+            projectTitleHeader.innerText = title;
+
+            var projectThumbnailImage = document.createElement('img');
+            projectThumbnailImage.src = thumbnail || '';
+
+            var projectCommentP = document.createElement('p');
+            projectCommentP.innerText = project.comment || '';
+
+            var link = document.createElement('a');
+
+            link.href = 'https://beta.webmaker.org/#/player?user=' + project.author.id + '&project=' + project.id;
+
+            link.appendChild(projectTitleHeader);
+            link.appendChild(projectThumbnailImage);
+            li.appendChild(link);
+            li.appendChild(projectCommentP);
+          };
+
+          projectDataXHR.send();
+
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function (e) {
+        var user;
+
+        if (window.location.search) {
+          user = window.location.search.substr(6);
+        }
+
+        var projectListXHR = new XMLHttpRequest();
+        projectListXHR.open('GET', 'https://api.webmaker.org/users/' + user + '/projects?count=100', true);
+        projectListXHR.onload = function (e) {
+          var projectListJSON = JSON.parse(projectListXHR.response);
+          populateList(projectListJSON.projects);
+        };
+
+        projectListXHR.send();
+      });
+    </script>
+  </head>
+  <body>
+    <div id="main">
+      <h1>Great Webmaker Projects</h1>
+      <ul id="project-list">
+        pick a user using ?user=XXXXXXXX
+      </ul>
+    </div>
+  </body>
+</html>
