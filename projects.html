@@ -1,0 +1,126 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Language" content="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//code.cdn.mozilla.net/fonts/fira.css">
+    <title>Great Webmaker Projects</title>
+    <style>
+      html {
+        background: linear-gradient(135deg, #4c88ef 0%,#17e4d9 100%);
+        background-attachment: fixed;
+        background-size: contain;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        font-family: FiraSans, 'Fira Sans', 'Open Sans';
+        font-size: 18pt;
+        color: white;
+      }
+
+      a {
+        color: white;
+      }
+
+      #main {
+        margin: 3em auto;
+        width: 800px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      ol {
+        padding-left: 2em;
+      }
+
+      li {
+        padding-bottom: 1em;
+      }
+
+      ul {
+        list-style: none;
+      }
+
+      li img {
+        border: 15px solid #eee;
+
+      }
+
+      @media (max-width: 800px) {
+        body {
+          font-size: 14pt;
+        }
+
+        #main {
+          width: 350px;
+        }
+
+        li {
+          padding-bottom: 0;
+        }
+      }
+    </style>
+    <script>
+      document.addEventListener('DOMContentLoaded', function (e) {
+        var projectList = document.querySelector('#project-list');
+
+        var projectListXHR = new XMLHttpRequest();
+        projectListXHR.open('GET', 'projects.json', true);
+
+        projectListXHR.onload = function (e) {
+          var projectListJSON = JSON.parse(projectListXHR.response);
+
+          projectListJSON.forEach(function (project) {
+            var li = document.createElement('li');
+            projectList.appendChild(li);
+
+            var projectDataXHR = new XMLHttpRequest();
+            projectDataXHR.open('GET', 'https://api.webmaker.org/users/' + project.user + '/projects/' + project.project + '/', true);
+            projectDataXHR.onload = function (e) {
+              var projectData = JSON.parse(projectDataXHR.response);
+
+              var thumbnail = projectData.project.thumbnail['320'];
+              var title = projectData.project.title;
+
+              var projectTitleH2 = document.createElement('h2');
+              projectTitleH2.innerText = title;
+
+              var projectThumbnailImage = document.createElement('img');
+              projectThumbnailImage.src = thumbnail;
+
+              var projectCommentP = document.createElement('p');
+              projectCommentP.innerText = project.comment;
+
+              li.appendChild(projectTitleH2);
+              li.appendChild(projectThumbnailImage);
+              li.appendChild(projectCommentP);
+            };
+
+            projectDataXHR.send();
+
+          });
+        };
+
+        projectListXHR.send();
+      });
+    </script>
+  </head>
+  <body>
+    <div id="main">
+      <h1>Great Webmaker Projects</h1>
+      <ul id="project-list">
+      </ul>
+    </div>
+  </body>
+</html>
