@@ -1,0 +1,167 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Language" content="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//code.cdn.mozilla.net/fonts/fira.css">
+    <title>Getting Started with Webmaker</title>
+    <style>
+      html {
+        background: linear-gradient(135deg, #4c88ef 0%,#17e4d9 100%);
+        background-attachment: fixed;
+        background-size: contain;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        font-family: FiraSans, 'Fira Sans', 'Open Sans';
+        font-size: 18pt;
+        color: white;
+      }
+
+      a {
+        color: white;
+      }
+
+      #main {
+        margin: 3em auto;
+        width: 800px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      .clear {
+        clear: both;
+      }
+
+      .screenshot {
+        display: block;
+        width: 250px;
+        height: 548px;
+        overflow: hidden;
+        position: relative;
+        padding-right: 1em;
+        margin-right: 1em;
+      }
+
+      .screenshot img {
+        width: 243px;
+        position: absolute;
+        top: 67px;
+        left: 16px;
+      }
+
+      .screenshot.left {
+        float: left;
+      }
+
+      .screenshot.right {
+        float: right;
+        padding-right: 1em;
+      }
+
+      .screenshot:after {
+        position: absolute;
+        display: block;
+        top: 0;
+        left: 0;
+        content: ' ';
+        width: 100%;
+        height: 100%;
+        background-image: url('screenshots/phone.png');
+        background-size: cover;
+      }
+
+      section {
+        padding-top: 2em;
+      }
+
+      section:first-of-type {
+        padding-top: 0;
+      }
+
+      section p {
+      }
+
+      .list-number {
+        display: inline-block;
+        float: left;
+        height: 47px;
+        width: 47px;
+        font-size: 40px;
+        line-height: 47px;
+        border-radius: 47px;
+        border: 2px solid #fff;
+        text-align: center;
+      }
+
+      .step {
+        display: inline;
+      }
+
+      .card {
+        width: 450px;
+        border: 10px solid rgb(234, 235, 240);
+        border-radius: 5px;
+      }
+
+      .card img {
+        width: 440px;
+        border: 5px solid #fff;
+        box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.4);
+      }
+
+      .card.center {
+        margin: 0 auto;
+      }
+
+      .inline {
+        display: inline-block;
+      }
+
+      .centered-screenshot-container {
+        text-align: center;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <h1>Getting Started with Webmaker</h1>
+      <section>
+        <div class="screenshot left"><img src="screenshots/login.png"></div>
+        <p>To start using Webmaker, you’ll need an Android device and an Internet connection. Visit <a href="https://mzl.la/webmaker">mzl.la/webmaker</a> to download the app, or find it on the <a href="https://mzl.la/webmaker">Google Play store</a>. It’s free and open source.</p>
+        <p>Once you’ve downloaded and launched Webmaker, you can make an account. It’s simple: just enter a username, password and email address.</p>
+        <p>Soon after, you’ll receive a confirmation email from Mozilla. You’re ready to create, discover and share the Web!</p>
+      </section>
+      <section class="clear">
+        <h2>Discover</h2>
+        <p>Webmaker has the same ethos as the Web: it’s open, social and collaborative. The app lets you see what people around you are creating. To explore what your community is making, log in and select the “Discover” tab in the top left.</p>
+        <div class="card center"><img src="screenshots/discover.png"></div>
+        <p>Beneath, other users’ creations will populate. You can swipe up and down to scan them, and tap on projects that interest you most to expand them.</p>
+        <div class="centered-screenshot-container">
+          <div class="screenshot inline"><img src="screenshots/discover2.png"></div>
+          <div class="screenshot inline"><img src="screenshots/play.png"></div>
+        </div>
+        <p>See something you really like? You can remix projects, adding your own flair and updates. (Don’t worry — each remix is a copy of the original. You’re not overwriting an existing project.) Tap the three dots in the top right corner and select “Remix.” You can then swap in your own text, photos and buttons.</p>
+      </section>
+      <section class="clear">
+        <h2>Create</h2>
+      </section>
+      <section class="clear">
+        <h2>Share</h2>
+      </section>
+      <section class="clear"><!-- Deliberately Empty --></section>
+    </div>
+  </body>
+</html>
