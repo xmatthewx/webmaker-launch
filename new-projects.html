@@ -128,20 +128,18 @@
       }
 
       document.addEventListener('DOMContentLoaded', function (e) {
-        var user;
+        var language;
 
         if (window.location.search) {
-          user = window.location.search.substr(6);
-        }
-        else {
-          return;
+          language = window.location.search.substr(9);
         }
 
         var projectListXHR = new XMLHttpRequest();
-        projectListXHR.open('GET', 'https://api.webmaker.org/users/' + user + '/projects?count=100', true);
+        projectListXHR.open('GET', 'https://api.webmaker.org/projects?count=100', true);
         projectListXHR.onload = function (e) {
           var projectListJSON = JSON.parse(projectListXHR.response);
           populateList(projectListJSON.projects);
+          projectListJSON.forEach()
         };
 
         projectListXHR.send();
@@ -152,7 +150,7 @@
     <div id="main">
       <h1>Great Webmaker Projects</h1>
       <ul id="project-list">
-        pick projects by user using ?user=XXXXXXXX
+        pick projects by language using ?language=XXXXXXXX
       </ul>
     </div>
   </body>
