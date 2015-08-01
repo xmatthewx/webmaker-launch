@@ -79,6 +79,10 @@
         margin-bottom: 1em;
         display: block;
       }
+
+      .nav {
+        text-align: center;
+      }
     </style>
     <script>
       function populateList (projectListJSON) {
@@ -128,18 +132,69 @@
       }
 
       document.addEventListener('DOMContentLoaded', function (e) {
-        var language;
-
-        if (window.location.search) {
-          language = window.location.search.substr(9);
+        // From http://stackoverflow.com/questions/2090551/parse-query-string-in-javascript
+        function getQueryVariable(variable) {
+          var query = window.location.search.substring(1);
+          var vars = query.split('&');
+          for (var i = 0; i < vars.length; i++) {
+            var pair = vars[i].split('=');
+            if (decodeURIComponent(pair[0]) == variable) {
+              return decodeURIComponent(pair[1]);
+            }
+          }
         }
 
+        var language = getQueryVariable('language') || '';
+        var page = parseInt(getQueryVariable('page')) || 1;
+
+        Array.prototype.forEach.call(document.querySelectorAll('button.last'), function (button) {
+          var options = [
+            'language=' + language,
+            'page=' + Math.max(1, page - 1)
+          ];
+
+          button.onclick = function (e) {
+            window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
+              '?' + options.join('&');
+          }
+        });
+
+        Array.prototype.forEach.call(document.querySelectorAll('button.next'), function (button) {
+          var options = [
+            'language=' + language,
+            'page=' + (page + 1)
+          ];
+
+          button.onclick = function (e) {
+            window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
+              '?' + options.join('&');
+          }
+        });
+
+        document.querySelector('.nav > select.language').onchange = function(e) {
+          var options = [
+            'language=' + this.value,
+            'page=' + page
+          ];
+
+          window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
+            '?' + options.join('&');
+        };
+
+        document.querySelector('.nav > select.language').value = language;
+
         var projectListXHR = new XMLHttpRequest();
-        projectListXHR.open('GET', 'https://api.webmaker.org/projects?count=100', true);
+        projectListXHR.open('GET', 'https://api.webmaker.org/projects?count=100&page=' + page, true);
         projectListXHR.onload = function (e) {
           var projectListJSON = JSON.parse(projectListXHR.response);
+
+          if (language) {
+            projectListJSON.projects = projectListJSON.projects.filter(function (project) {
+              return project.author.locale.language === language;
+            });
+          }
+
           populateList(projectListJSON.projects);
-          projectListJSON.forEach()
         };
 
         projectListXHR.send();
@@ -149,9 +204,23 @@
   <body>
     <div id="main">
       <h1>Great Webmaker Projects</h1>
+      <div class="nav">
+        <button class="last">Last</button>&nbsp;&nbsp;<button class="next">Next</button>
+        <select class="language">
+          <option></option>
+          <option value="en-US">en-US</option>
+          <option value="pt-BR">pt-BR</option>
+          <option value="bn-BD">bn-BD</option>
+          <option value="id-ID">id-ID</option>
+        </select>
+      </div>
       <ul id="project-list">
         pick projects by language using ?language=XXXXXXXX
       </ul>
+      <br clear="all">
+      <div class="nav">
+        <button class="last">Last</button>&nbsp;&nbsp;<button class="next">Next</button>
+      </div>
     </div>
   </body>
 </html>
