@@ -85,120 +85,171 @@
       }
     </style>
     <script>
-      function populateList (projectListJSON) {
-        var projectList = document.querySelector('#project-list');
-        projectList.innerHTML = '';
+      (function () {
+        var maxNumProjects = 100;
 
-        projectListJSON.forEach(function (project) {
-          var li = document.createElement('li');
-          projectList.appendChild(li);
+        var filters = {
+          elements: function (project, pages) {
+            var elementCount = 0;
+            pages.pages.forEach(function (page) {
+              elementCount += page.elements.length;
+            });
 
-          var projectDataXHR = new XMLHttpRequest();
-          projectDataXHR.open('GET', 'https://api.webmaker.org/users/' + project.author.id + '/projects/' + project.id + '/', true);
-          projectDataXHR.onload = function (e) {
-            var projectData = JSON.parse(projectDataXHR.response);
-
-            if (projectData.statusCode === 404) {
-              li.appendChild(document.createTextNode('Project ' + project.id + ' by ' + project.author.id + ' was deleted.'));
-              li.classList.add('beleted');
-              return;
-            }
-
-            var thumbnail = projectData.project.thumbnail['320'];
-            var title = projectData.project.title;
-
-            var projectTitleHeader = document.createElement('h3');
-            projectTitleHeader.innerText = title;
-
-            var projectThumbnailImage = document.createElement('img');
-            projectThumbnailImage.src = thumbnail || '';
-
-            var projectCommentP = document.createElement('p');
-            projectCommentP.innerText = project.comment || '';
-
-            var link = document.createElement('a');
-
-            link.href = 'https://beta.webmaker.org/#/player?user=' + project.author.id + '&project=' + project.id;
-
-            link.appendChild(projectTitleHeader);
-            link.appendChild(projectThumbnailImage);
-            li.appendChild(link);
-            li.appendChild(projectCommentP);
-          };
-
-          projectDataXHR.send();
-
-        });
-      }
-
-      document.addEventListener('DOMContentLoaded', function (e) {
-        // From http://stackoverflow.com/questions/2090551/parse-query-string-in-javascript
-        function getQueryVariable(variable) {
-          var query = window.location.search.substring(1);
-          var vars = query.split('&');
-          for (var i = 0; i < vars.length; i++) {
-            var pair = vars[i].split('=');
-            if (decodeURIComponent(pair[0]) == variable) {
-              return decodeURIComponent(pair[1]);
-            }
+            return elementCount > 2;
+          },
+          myproject: function (project, pages) {
+            return ['My project', 'Meu projeto'].indexOf(project.title) === -1;
+          },
+          all: function (project, pages) {
+            return filters.elements(project, pages) && filters.myproject(project, pages);
           }
+        };
+
+        function populateList (projectListJSON, filter) {
+          var projectList = document.querySelector('#project-list');
+          projectList.innerHTML = '';
+
+          projectListJSON.forEach(function (project) {
+            var li = document.createElement('li');
+
+            var projectDataXHR = new XMLHttpRequest();
+            projectDataXHR.open('GET', 'https://api.webmaker.org/users/' + project.author.id + '/projects/' + project.id + '/', true);
+            projectDataXHR.onload = function (e) {
+              var projectData = JSON.parse(projectDataXHR.response);
+
+              if (projectData.statusCode === 404) {
+                li.appendChild(document.createTextNode('Project ' + project.id + ' by ' + project.author.id + ' was deleted.'));
+                li.classList.add('beleted');
+                return;
+              }
+
+              var pagesXHR = new XMLHttpRequest();
+              pagesXHR.open('GET', 'https://api.webmaker.org/users/' + project.author.id + '/projects/' + project.id + '/pages', true);
+
+              pagesXHR.onload = function (e) {
+                var pagesData = JSON.parse(pagesXHR.response);
+
+                if (filters[filter] && !filters[filter](project, pagesData)) {
+                  return;
+                }
+
+                var thumbnail = projectData.project.thumbnail['320'];
+                var title = projectData.project.title;
+
+                var projectTitleHeader = document.createElement('h3');
+                projectTitleHeader.innerText = title;
+
+                var projectThumbnailImage = document.createElement('img');
+                projectThumbnailImage.src = thumbnail || '';
+
+                var projectCommentP = document.createElement('p');
+                projectCommentP.innerText = project.comment || '';
+
+                var link = document.createElement('a');
+
+                link.href = 'https://beta.webmaker.org/#/player?user=' + project.author.id + '&project=' + project.id;
+
+                link.appendChild(projectTitleHeader);
+                link.appendChild(projectThumbnailImage);
+                li.appendChild(link);
+                li.appendChild(projectCommentP);
+
+                projectList.appendChild(li);
+              };
+
+              pagesXHR.send();
+            };
+
+            projectDataXHR.send();
+
+          });
         }
 
-        var language = getQueryVariable('language') || '';
-        var page = parseInt(getQueryVariable('page')) || 1;
+        document.addEventListener('DOMContentLoaded', function (e) {
+          // From http://stackoverflow.com/questions/2090551/parse-query-string-in-javascript
+          function getQueryVariable(variable) {
+            var query = window.location.search.substring(1);
+            var vars = query.split('&');
+            for (var i = 0; i < vars.length; i++) {
+              var pair = vars[i].split('=');
+              if (decodeURIComponent(pair[0]) == variable) {
+                return decodeURIComponent(pair[1]);
+              }
+            }
+          }
 
-        Array.prototype.forEach.call(document.querySelectorAll('button.last'), function (button) {
-          var options = [
-            'language=' + language,
-            'page=' + Math.max(1, page - 1)
-          ];
+          var language = getQueryVariable('language') || '';
+          var filter = getQueryVariable('filter') || '';
+          var page = parseInt(getQueryVariable('page')) || 1;
 
-          button.onclick = function (e) {
+          Array.prototype.forEach.call(document.querySelectorAll('button.last'), function (button) {
+            var options = [
+              'language=' + language,
+              'filter=' + filter,
+              'page=' + Math.max(1, page - 1)
+            ];
+
+            button.onclick = function (e) {
+              window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
+                '?' + options.join('&');
+            }
+          });
+
+          Array.prototype.forEach.call(document.querySelectorAll('button.next'), function (button) {
+            var options = [
+              'language=' + language,
+              'filter=' + filter,
+              'page=' + (page + 1)
+            ];
+
+            button.onclick = function (e) {
+              window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
+                '?' + options.join('&');
+            }
+          });
+
+          document.querySelector('.nav > select.language').onchange = function(e) {
+            var options = [
+              'language=' + this.value,
+              'filter=' + filter,
+              'page=' + page
+            ];
+
             window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
               '?' + options.join('&');
-          }
-        });
+          };
 
-        Array.prototype.forEach.call(document.querySelectorAll('button.next'), function (button) {
-          var options = [
-            'language=' + language,
-            'page=' + (page + 1)
-          ];
+          document.querySelector('.nav > select.filter').onchange = function(e) {
+            var options = [
+              'language=' + language,
+              'filter=' + this.value,
+              'page=' + page
+            ];
 
-          button.onclick = function (e) {
             window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
               '?' + options.join('&');
-          }
+          };
+
+          document.querySelector('.nav > select.language').value = language;
+          document.querySelector('.nav > select.filter').value = filter;
+
+          var projectListXHR = new XMLHttpRequest();
+          projectListXHR.open('GET', 'https://api.webmaker.org/projects?count=' + maxNumProjects + ' &page=' + page, true);
+          projectListXHR.onload = function (e) {
+            var projectListJSON = JSON.parse(projectListXHR.response);
+
+            if (language) {
+              projectListJSON.projects = projectListJSON.projects.filter(function (project) {
+                return project.author.locale.language === language;
+              });
+            }
+
+            populateList(projectListJSON.projects, filter);
+          };
+
+          projectListXHR.send();
         });
-
-        document.querySelector('.nav > select.language').onchange = function(e) {
-          var options = [
-            'language=' + this.value,
-            'page=' + page
-          ];
-
-          window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
-            '?' + options.join('&');
-        };
-
-        document.querySelector('.nav > select.language').value = language;
-
-        var projectListXHR = new XMLHttpRequest();
-        projectListXHR.open('GET', 'https://api.webmaker.org/projects?count=100&page=' + page, true);
-        projectListXHR.onload = function (e) {
-          var projectListJSON = JSON.parse(projectListXHR.response);
-
-          if (language) {
-            projectListJSON.projects = projectListJSON.projects.filter(function (project) {
-              return project.author.locale.language === language;
-            });
-          }
-
-          populateList(projectListJSON.projects);
-        };
-
-        projectListXHR.send();
-      });
+      })();
     </script>
   </head>
   <body>
@@ -213,9 +264,14 @@
           <option value="bn-BD">bn-BD</option>
           <option value="id-ID">id-ID</option>
         </select>
+        <select class="filter">
+          <option value="">No filter</option>
+          <option value="elements">Elements > 2</option>
+          <option value="myproject">Not "My Project"</option>
+          <option value="all">All</option>
+        </select>
       </div>
       <ul id="project-list">
-        pick projects by language using ?language=XXXXXXXX
       </ul>
       <br clear="all">
       <div class="nav">
