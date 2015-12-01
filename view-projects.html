@@ -1,0 +1,285 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Language" content="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//code.cdn.mozilla.net/fonts/fira.css">
+    <title>Super Webmaker Projects</title>
+    <style>
+      html {
+        background: linear-gradient(135deg, #4c88ef 0%,#17e4d9 100%);
+        background-attachment: fixed;
+        background-size: contain;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        font-family: FiraSans, 'Fira Sans', 'Open Sans';
+        font-size: 18pt;
+        color: white;
+      }
+
+      a {
+        color: white;
+      }
+
+      #main {
+        margin: 3em auto;
+        width: 800px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        width: 800px;
+        display: block;
+      }
+
+      li {
+        border: 15px solid #eee;
+        background: #fff;
+        color: #000;
+        margin-bottom: 1em;
+        padding: 0 1em;
+        width: 310px;
+        height: 500px;
+        display: inline-block;
+        float: left;
+        overflow-x: none;
+      }
+
+      li:nth-child(even) {
+        margin-left: 22px;
+      }
+
+      li.beleted {
+        height: 3em;
+      }
+
+      li a {
+        color: black;
+        text-decoration: none;
+      }
+
+      textarea {
+        width: 100%;
+        height: 20em;
+        margin-bottom: 1em;
+        display: block;
+      }
+
+      .nav {
+        text-align: center;
+      }
+    </style>
+    <script>
+      (function () {
+        var maxNumProjects = 100;
+
+        var filters = {
+          elements: function (project, pages) {
+            var elementCount = 0;
+            pages.pages.forEach(function (page) {
+              elementCount += page.elements.length;
+            });
+
+            return elementCount > 5;
+          },
+          myproject: function (project, pages) {
+            return ['My project', 'Meu projeto', 'Proyek saya'].indexOf(project.title) === -1;
+          },
+          all: function (project, pages) {
+            return filters.elements(project, pages) && filters.myproject(project, pages);
+          }
+        };
+
+        function populateList (projectListJSON, filter) {
+          var projectList = document.querySelector('#project-list');
+          projectList.innerHTML = '';
+
+          projectListJSON.forEach(function (project) {
+            var li = document.createElement('li');
+
+            var projectDataXHR = new XMLHttpRequest();
+            projectDataXHR.open('GET', 'https://api.webmaker.org/users/' + project.author.id + '/projects/' + project.id + '/', true);
+            projectDataXHR.onload = function (e) {
+              var projectData = JSON.parse(projectDataXHR.response);
+
+              if (projectData.statusCode === 404) {
+                li.appendChild(document.createTextNode('Project ' + project.id + ' by ' + project.author.id + ' was deleted.'));
+                li.classList.add('beleted');
+                return;
+              }
+
+              var pagesXHR = new XMLHttpRequest();
+              pagesXHR.open('GET', 'https://api.webmaker.org/users/' + project.author.id + '/projects/' + project.id + '/pages', true);
+
+              pagesXHR.onload = function (e) {
+                var pagesData = JSON.parse(pagesXHR.response);
+
+                if (filters[filter] && !filters[filter](project, pagesData)) {
+                  return;
+                }
+
+
+                console.log(projectData.project);
+
+                var thumbnail = projectData.project.thumbnail['320'];
+                var title = projectData.project.title;
+
+                var projectTitleHeader = document.createElement('h3');
+                projectTitleHeader.innerText = title;
+
+                var projectThumbnailImage = document.createElement('img');
+                projectThumbnailImage.src = thumbnail || '';
+
+                var projectCommentP = document.createElement('p');
+                projectCommentP.innerText = project.comment || '';
+
+                var link = document.createElement('a');
+
+                link.href = 'https://beta.webmaker.org/#/player?user=' + project.author.id + '&project=' + project.id;
+
+                link.appendChild(projectTitleHeader);
+                link.appendChild(projectThumbnailImage);
+                li.appendChild(link);
+                li.appendChild(projectCommentP);
+
+                projectList.appendChild(li);
+              };
+
+              pagesXHR.send();
+            };
+
+            projectDataXHR.send();
+
+          });
+        }
+
+        document.addEventListener('DOMContentLoaded', function (e) {
+          // From http://stackoverflow.com/questions/2090551/parse-query-string-in-javascript
+          function getQueryVariable(variable) {
+            var query = window.location.search.substring(1);
+            var vars = query.split('&');
+            for (var i = 0; i < vars.length; i++) {
+              var pair = vars[i].split('=');
+              if (decodeURIComponent(pair[0]) == variable) {
+                return decodeURIComponent(pair[1]);
+              }
+            }
+          }
+
+          var language = getQueryVariable('language') || '';
+          var filter = getQueryVariable('filter') || '';
+          var page = parseInt(getQueryVariable('page')) || 1;
+
+          Array.prototype.forEach.call(document.querySelectorAll('button.last'), function (button) {
+            var options = [
+              'language=' + language,
+              'filter=' + filter,
+              'page=' + Math.max(1, page - 1)
+            ];
+
+            button.onclick = function (e) {
+              window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
+                '?' + options.join('&');
+            }
+          });
+
+          Array.prototype.forEach.call(document.querySelectorAll('button.next'), function (button) {
+            var options = [
+              'language=' + language,
+              'filter=' + filter,
+              'page=' + (page + 1)
+            ];
+
+            button.onclick = function (e) {
+              window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
+                '?' + options.join('&');
+            }
+          });
+
+          document.querySelector('.nav > select.language').onchange = function(e) {
+            var options = [
+              'language=' + this.value,
+              'filter=' + filter,
+              'page=' + page
+            ];
+
+            window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
+              '?' + options.join('&');
+          };
+
+          document.querySelector('.nav > select.filter').onchange = function(e) {
+            var options = [
+              'language=' + language,
+              'filter=' + this.value,
+              'page=' + page
+            ];
+
+            window.location.href = window.location.href.substr(0, window.location.href.length - window.location.search.length) +
+              '?' + options.join('&');
+          };
+
+          document.querySelector('.nav > select.language').value = language;
+          document.querySelector('.nav > select.filter').value = filter;
+
+          var projectListXHR = new XMLHttpRequest();
+          projectListXHR.open('GET', 'https://api.webmaker.org/projects?count=' + maxNumProjects + ' &page=' + page, true);
+          projectListXHR.onload = function (e) {
+            var projectListJSON = JSON.parse(projectListXHR.response);
+
+            if (language) {
+              projectListJSON.projects = projectListJSON.projects.filter(function (project) {
+                return project.author.locale.language === language;
+              });
+            }
+
+            populateList(projectListJSON.projects, filter);
+          };
+
+          projectListXHR.send();
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="main">
+      <h1>Great Webmaker Projects</h1>
+      <div class="nav">
+        <button class="last">Last</button>&nbsp;&nbsp;<button class="next">Next</button>
+        <select class="language">
+          <option></option>
+          <option value="en-US">en-US</option>
+          <option value="pt-BR">pt-BR</option>
+          <option value="bn-BD">bn-BD</option>
+          <option value="id-ID">id-ID</option>
+        </select>
+        <select class="filter">
+          <option value="">No filter</option>
+          <option value="elements">Elements > 5</option>
+          <option value="myproject">Not "My Project"</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+      <ul id="project-list">
+      </ul>
+      <br clear="all">
+      <div class="nav">
+        <button class="last">Last</button>&nbsp;&nbsp;<button class="next">Next</button>
+      </div>
+    </div>
+  </body>
+</html>
